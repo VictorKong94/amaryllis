@@ -11,6 +11,7 @@ In order to run this project, you must also have the following installed:
 - `Bowtie2`
 - `Perl` (modules: `Log::Reproducible`, `autodie.pm`, `Parallel/ForkManager.pm`)
 - `R` (modules: `limma`, `edgeR`, `locfit`, `ggplot2`)
+
 If using a server hosted by Amazon Web Services, see
 [here](https://gist.github.com/mfcovington/27746b491743ababf32cbadd49846730)
 for more information on dependencies.
@@ -19,7 +20,9 @@ for more information on dependencies.
 
 When configuring the pipeline for the first time, edit the "SETUP" block in
 `pipeline.sh` to match your system's directory sturcture and your preferences.
+
 Before running an instance of the pipeline, edit `parameters.sh` to include
 specifications about the job you want to do.
+
 To run the pipeline, execute the following command in your terminal:
     `sh /path/to/pipeline.sh`
