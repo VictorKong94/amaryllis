@@ -31,10 +31,6 @@ BOWTIE_THREADS=5
 #   - `--et` Fisher's exact test (suitable for experiments with a single factor)
 #   - `--lrt` likelihood ratio test
 #   - `--qlf` quasi-likelihood F-test
-# - Group names
-#   - Order by appearance in OS
-#   - Begin with the control or wild-type
-#   - Separate with commas
 # - Jobs
 #   - Format is "-j <baseline1>,<treatment1> <baseline2>,<treatment2> ..."
 METHOD=
