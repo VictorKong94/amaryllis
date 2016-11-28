@@ -139,7 +139,7 @@ if (method %in% c("-s", "--sort-options")) {
   qualities = qualities[!is.na(qualities$Score),]
   write.table(data.frame("Score" = as.numeric(qualities$Score),
                          "Group" = qualities$Group),
-              file = quality_data_outfile, row.names = F)
+              file = quality_data_outfile, sep = "\t", row.names = F)
   library("ggplot2", quietly = T)
   pdf(NULL)
   ggplot(qualities, aes(x = Score)) +
@@ -209,7 +209,7 @@ if (method %in% c("-s", "--sort-options")) {
   qualities = qualities[!is.na(qualities$Score),]
   write.table(data.frame("Score" = as.numeric(qualities$Score),
                          "Group" = qualities$Group),
-              file = quality_data_outfile, row.names = F)
+              file = quality_data_outfile, sep = "\t", row.names = F)
   library("ggplot2", quietly = T)
   pdf(NULL)
   ggplot(qualities, aes(x = Score)) +
