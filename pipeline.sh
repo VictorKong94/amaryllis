@@ -64,7 +64,10 @@ for SAMPLE in $(ls $CLIP_DIR); do
         java -jar $TRIMMER SE -phred33 -threads $TRIM_THREADS \
              $CLIP_DIR/$SAMPLE/$FILE $TRIM_DIR/$SAMPLE/$FILE \
              ILLUMINACLIP:$ADAPTERS \
-             LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:50 \
+             LEADING:$LEADING \
+             TRAILING:$TRAILING \
+             SLIDINGWINDOW:$SLIDINGWINDOW \
+             MINLEN:$MINLEN \
              2>> $QA_DIR/trimmed_logs/$SAMPLE/${FILE/.fastq.gz/.log}
     done
     fastqc -o $QA_DIR/trimmed_qc/$SAMPLE $(find $TRIM_DIR/$SAMPLE -name "*.gz")
@@ -91,3 +94,6 @@ perl $READ_COUNTER -o $COUNT_DIR $(find $BAM_DIR -name "*.sorted.bam")
 # Stage 5: Use edgeR to perform differential expression analysis
 mkdir -p $ANALYSIS_DIR
 Rscript $DGE $METHOD $COUNT_DIR $ANNOTATIONS $SAMPLES $JOBS
+
+# Save parameters used to base directory
+cp parameters.sh $BASE_DIR/parameters.sh
