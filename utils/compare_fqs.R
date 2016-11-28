@@ -93,7 +93,8 @@ if (method %in% c("-s", "--sort-options")) {
   # QUALITY ASSESSMENT #
   ######################
   
-  quality_outfile = paste0(outpath, "quality_assessment.pdf")
+  quality_data_outfile = paste0(outpath, "quality_assessment.txt")
+  quality_plot_outfile = paste0(outpath, "quality_assessment.pdf")
   
   quality = function(my_ids, all_ids, quality_scores) {
     # Define the the key for quality scores
@@ -136,19 +137,23 @@ if (method %in% c("-s", "--sort-options")) {
     "Score" = unlist(qualities, use.names = F),
     "Group" = rep(names(qualities), times = sapply(qualities, length)))
   qualities = qualities[!is.na(qualities$Score),]
+  write.table(data.frame("Score" = as.numeric(qualities$Score),
+                         "Group" = qualities$Group),
+              file = quality_data_outfile, row.names = F)
   library("ggplot2", quietly = T)
   pdf(NULL)
   ggplot(qualities, aes(x = Score)) +
     labs(x = "Quality Score", y = "Density") +
     geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.3)
-  ggsave(quality_outfile, width = 11, height = 8.5, units = "in")
+  ggsave(quality_plot_outfile, width = 11, height = 8.5, units = "in")
 
 } else if (method %in% c("-b", "--both")) {
   
   fq1_only_outfile = paste0(outpath, "fq1_only.fastq.gz")
   fq2_only_outfile = paste0(outpath, "fq2_only.fastq.gz")
   both_fqs_outfile = paste0(outpath, "both_fqs.fastq.gz")
-  quality_outfile = paste0(outpath, "quality_assessment.pdf")
+  quality_data_outfile = paste0(outpath, "quality_assessment.txt")
+  quality_plot_outfile = paste0(outpath, "quality_assessment.pdf")
   
   sort_output = function(my_ids, all_ids, all_data) {
     sapply(my_ids, function(x) all_data[seq(match(x, all_ids), length.out = 4)])
@@ -202,11 +207,14 @@ if (method %in% c("-s", "--sort-options")) {
     "Score" = unlist(qualities, use.names = F),
     "Group" = rep(names(qualities), times = sapply(qualities, length)))
   qualities = qualities[!is.na(qualities$Score),]
+  write.table(data.frame("Score" = as.numeric(qualities$Score),
+                         "Group" = qualities$Group),
+              file = quality_data_outfile, row.names = F)
   library("ggplot2", quietly = T)
   pdf(NULL)
   ggplot(qualities, aes(x = Score)) +
     labs(x = "Quality Score", y = "Density") +
     geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.3)
-  ggsave(quality_outfile, width = 11, height = 8.5, units = "in")
+  ggsave(quality_plot_outfile, width = 11, height = 8.5, units = "in")
   
 }
