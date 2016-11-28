@@ -65,7 +65,12 @@ if (method %in% c("-s", "--sort-options")) {
   both_fqs_outfile = paste0(outpath, "both_fqs.fastq.gz")
   
   sort_output = function(my_ids, all_ids, all_data) {
-    sapply(my_ids, function(x) all_data[seq(match(x, all_ids), length.out = 4)])
+    if (is.na(my_ids)) {
+      return(character(0))
+    } else {
+      return(sapply(my_ids, function(x)
+        all_data[seq(4 * match(x, all_ids) - 3, length.out = 4)]))
+    }
   }
   
   # Write subsets of data into separate files
@@ -75,13 +80,13 @@ if (method %in% c("-s", "--sort-options")) {
   rm(fq1_only, fq1_ids, fq1)
   print("Reads unique to first FASTQ written to file")
   
-  con = gzfile(fq1_only_outfile, "wb")
+  con = gzfile(fq2_only_outfile, "wb")
   writeLines(as.vector(sort_output(fq2_only, fq2_ids, fq2)), con)
   close(con)
   rm(fq2_only)
   print("Reads unique to second FASTQ written to file")
   
-  con = gzfile(fq1_only_outfile, "wb")
+  con = gzfile(both_fqs_outfile, "wb")
   writeLines(as.vector(sort_output(both_fqs, fq2_ids, fq2)), con)
   close(con)
   rm(fq2_ids, fq2, both_fqs)
@@ -113,7 +118,7 @@ if (method %in% c("-s", "--sort-options")) {
   
   # Extract read quality
   fq1_quality = fq1[seq(4, length(fq1), by = 4)]
-  fq2_quality = fq2[seq(4, length(fq1), by = 4)]
+  fq2_quality = fq2[seq(4, length(fq2), by = 4)]
   rm(fq1, fq2)
   print("Read quality extracted")
   
@@ -139,7 +144,7 @@ if (method %in% c("-s", "--sort-options")) {
   qualities = qualities[!is.na(qualities$Score),]
   write.table(data.frame("Score" = as.numeric(qualities$Score),
                          "Group" = qualities$Group),
-              file = quality_data_outfile, sep = "\t", row.names = F)
+              file = quality_data_outfile, row.names = F)
   library("ggplot2", quietly = T)
   pdf(NULL)
   ggplot(qualities, aes(x = Score)) +
@@ -156,7 +161,8 @@ if (method %in% c("-s", "--sort-options")) {
   quality_plot_outfile = paste0(outpath, "quality_assessment.pdf")
   
   sort_output = function(my_ids, all_ids, all_data) {
-    sapply(my_ids, function(x) all_data[seq(match(x, all_ids), length.out = 4)])
+    sapply(my_ids, function(x)
+      all_data[seq(4 * match(x, all_ids) - 3, length.out = 4)])
   }
   
   quality = function(my_ids, all_ids, quality_scores) {
@@ -186,9 +192,9 @@ if (method %in% c("-s", "--sort-options")) {
   rm(fq1_only, fq1_ids, fq1)
   print("Reads unique to first FASTQ written to file")
   
-  fq2_quality = fq2[seq(4, length(fq1), by = 4)]
+  fq2_quality = fq2[seq(4, length(fq2), by = 4)]
   qualities$"FASTQ 2 Only" = quality(fq2_only, fq2_ids, fq2_quality)
-  con = gzfile(fq1_only_outfile, "wb")
+  con = gzfile(fq2_only_outfile, "wb")
   writeLines(as.vector(sort_output(fq2_only, fq2_ids, fq2)), con)
   close(con)
   rm(fq2_only)
@@ -209,7 +215,7 @@ if (method %in% c("-s", "--sort-options")) {
   qualities = qualities[!is.na(qualities$Score),]
   write.table(data.frame("Score" = as.numeric(qualities$Score),
                          "Group" = qualities$Group),
-              file = quality_data_outfile, sep = "\t", row.names = F)
+              file = quality_data_outfile, row.names = F)
   library("ggplot2", quietly = T)
   pdf(NULL)
   ggplot(qualities, aes(x = Score)) +
