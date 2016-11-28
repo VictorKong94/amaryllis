@@ -15,6 +15,10 @@ EXP_LEN=
 
 # For Trimmomatic:
 TRIM_THREADS=25
+LEADING=3
+TRAILING=3
+SLIDINGWINDOW=4:15
+MINLEN=50
 
 # Reference genome to which to map reads
 REF_GENOME=
