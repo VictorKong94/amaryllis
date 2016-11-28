@@ -6,6 +6,7 @@
 . ./parameters.sh
 
 # Locate and create directories used to store data
+BASE_DIR=${BASE_DIR%/}
 QA_DIR=$BASE_DIR/qa
 RAW_DIR=$BASE_DIR/raw
 GROUPED_DIR=$BASE_DIR/grouped
@@ -19,18 +20,18 @@ ANALYSIS_DIR=$BASE_DIR/analysis
 ADAPTER_CLIPPER=adapter-clipper/clipper.py
 
 # Locate directory containing Trimmomatic
-TRIM_BIN=
 TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
 ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
 
 # Locate directory containing read_counter
 READ_COUNTER=read_counter/bin/simple_counts.pl
 
+# Locate directory containing dge_analysis
+DGE=dge-analysis/dge.R
+
 # Create join_by function, which concatenates multiple strings to one
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
-# Locate directory containing dge
-DGE=dge-analysis/dge.R
 
 ############
 # PIPELINE #
@@ -38,10 +39,10 @@ DGE=dge-analysis/dge.R
 
 # Stage 0: Create symbolic links back to raw files grouped by sample
 for FILE in $(find $RAW_DIR -name "*.fastq*"); do
-    FILENAME=${FILE/fq\/raw\//}
+    FILENAME=${FILE##*/}
     SAMPLE=$(cut -c 1-$TRUNC_AT <<< $FILENAME)
     mkdir -p $GROUPED_DIR/$SAMPLE
-    ln -s ../../../$FILE $GROUPED_DIR/$SAMPLE/$FILENAME
+    ln -sf ../..${FILE/$BASE_DIR/} $GROUPED_DIR/$SAMPLE/$FILENAME
 done
 for SAMPLE in $(ls $GROUPED_DIR); do
     mkdir -p $QA_DIR/raw/$SAMPLE
@@ -74,7 +75,7 @@ for SAMPLE in $(ls $CLIP_DIR); do
 done
 
 # Stage 3: Use Bowtie2 to map to cDNA reference
-mkdir $BAM_DIR $QA_DIR/bam_logs # $QA_DIR/bam_qc
+mkdir -p $BAM_DIR $QA_DIR/bam_logs # $QA_DIR/bam_qc
 for SAMPLE in $(ls $TRIM_DIR); do
     FQ_LIST=$(join_by , $TRIM_DIR/$SAMPLE/*)
     bowtie2 $BOWTIE_PARAMS -p$BOWTIE_THREADS -x $REF_GENOME \
@@ -86,14 +87,13 @@ for SAMPLE in $(ls $TRIM_DIR); do
 done
 #fastqc -o $QA_DIR/bam_qc -f bam_mapped $(find $BAM_DIR -name "*.sorted.bam")
 
-
 # Stage 4: Count reads per gene
+# sudo mkdir -p repro-archive
+# sudo chown $USER:root repro-archive
 mkdir -p $COUNT_DIR
 perl $READ_COUNTER -o $COUNT_DIR $(find $BAM_DIR -name "*.sorted.bam")
 
 # Stage 5: Use edgeR to perform differential expression analysis
-mkdir -p $ANALYSIS_DIR
-Rscript $DGE $METHOD $COUNT_DIR $ANNOTATIONS $SAMPLES $JOBS
+# mkdir -p $ANALYSIS_DIR
+# Rscript $DGE $METHOD $COUNT_DIR $ANNOTATIONS $SAMPLES $JOBS
 
-# Save parameters used to base directory
-cp parameters.sh $BASE_DIR/parameters.sh
