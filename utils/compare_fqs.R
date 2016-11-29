@@ -112,7 +112,8 @@ if (method %in% c("-s", "--sort-options")) {
             "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{",
             "|", "}", "~")
     all_quality = sapply(my_ids, function(x) quality_scores[match(x, all_ids)])
-    quality_assessment = factor(unlist(strsplit(all_quality, "")), levels = key)
+    quality_assessment =
+      as.numeric(factor(unlist(strsplit(all_quality, "")), levels = key))
     return(quality_assessment)
   }
   
@@ -142,7 +143,7 @@ if (method %in% c("-s", "--sort-options")) {
     "Score" = unlist(qualities, use.names = F),
     "Group" = rep(names(qualities), times = sapply(qualities, length)))
   qualities = qualities[!is.na(qualities$Score),]
-  write.table(data.frame("Score" = as.numeric(qualities$Score),
+  write.table(data.frame("Score" = qualities$Score,
                          "Group" = qualities$Group),
               file = quality_data_outfile, row.names = F)
   library("ggplot2", quietly = T)
@@ -176,7 +177,8 @@ if (method %in% c("-s", "--sort-options")) {
             "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{",
             "|", "}", "~")
     all_quality = sapply(my_ids, function(x) quality_scores[match(x, all_ids)])
-    quality_assessment = factor(unlist(strsplit(all_quality, "")), levels = key)
+    quality_assessment =
+      as.numeric(factor(unlist(strsplit(all_quality, "")), levels = key))
     return(quality_assessment)
   }
   
@@ -213,7 +215,7 @@ if (method %in% c("-s", "--sort-options")) {
     "Score" = unlist(qualities, use.names = F),
     "Group" = rep(names(qualities), times = sapply(qualities, length)))
   qualities = qualities[!is.na(qualities$Score),]
-  write.table(data.frame("Score" = as.numeric(qualities$Score),
+  write.table(data.frame("Score" = qualities$Score,
                          "Group" = qualities$Group),
               file = quality_data_outfile, row.names = F)
   library("ggplot2", quietly = T)
