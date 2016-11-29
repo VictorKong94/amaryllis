@@ -84,8 +84,8 @@ for SAMPLE in $(ls $TRIM_DIR); do
             | samtools view -bS -o $BAM_DIR/$SAMPLE.bam
     samtools sort -@$BOWTIE_THREADS \
              $BAM_DIR/$SAMPLE.bam -o $BAM_DIR/$SAMPLE.sorted.bam
+    rm $BAM_DIR/$SAMPLE.bam
 done
-#fastqc -o $QA_DIR/bam_qc -f bam_mapped $(find $BAM_DIR -name "*.sorted.bam")
 
 # Stage 4: Count reads per gene
 # sudo mkdir -p repro-archive
