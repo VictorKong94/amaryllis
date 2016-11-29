@@ -112,7 +112,8 @@ if (method %in% c("-s", "--sort-options")) {
             "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{",
             "|", "}", "~")
     all_quality = sapply(my_ids, function(x) quality_scores[match(x, all_ids)])
-    quality_assessment = factor(unlist(strsplit(all_quality, "")), levels = key)
+    quality_assessment =
+      as.numeric(factor(unlist(strsplit(all_quality, "")), levels = key))
     return(quality_assessment)
   }
   
@@ -176,7 +177,8 @@ if (method %in% c("-s", "--sort-options")) {
             "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{",
             "|", "}", "~")
     all_quality = sapply(my_ids, function(x) quality_scores[match(x, all_ids)])
-    quality_assessment = factor(unlist(strsplit(all_quality, "")), levels = key)
+    quality_assessment =
+      as.numeric(factor(unlist(strsplit(all_quality, "")), levels = key))
     return(quality_assessment)
   }
   
