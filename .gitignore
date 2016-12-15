@@ -90,3 +90,6 @@ ENV/
 
 # Mac OS X preference files
 *.DS_Store
+
+# Reference files
+reference/
