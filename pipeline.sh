@@ -2,8 +2,11 @@
 # SETUP #
 #########
 
+# Run with command `sh pipeline.sh <parameters_file>`
+PARAMETERS_FILE=$1
+
 # Source in base directory variable from plaintext file containing parameters
-export $(grep 'BASE_DIR=' parameters.txt)
+export $(grep 'BASE_DIR=' $PARAMETERS_FILE)
 
 # Locate and establish directories used to store data
 BASE_DIR=${BASE_DIR%/}
@@ -16,40 +19,94 @@ BAM_DIR=$BASE_DIR/bam
 COUNT_DIR=$BASE_DIR/counted
 ANALYSIS_DIR=$BASE_DIR/analysis
 
-# Source all other parameters necessary for pipeline
+# Check format of parameters necessary for pipeline and source
 INDEX=1
-PARAMS=$(grep -A1 '^SUBNAME' parameters.txt | grep -v '^SUBNAME')
-while [[ $PARAMS ]]; do
-  PARAMS=($PARAMS)
-  SUBNAME[$INDEX]=${PARAMS[0]}
-  SAMPLE[$INDEX]=${PARAMS[1]}
-  CLIP_LEN[$INDEX]=${PARAMS[2]}
-  if [[ ${#PARAMS[@]} -eq 11 ]]; then
-    TRIM_THREADS[$INDEX]=${PARAMS[3]}
-    LEADING[$INDEX]=${PARAMS[4]}
-    TRAILING[$INDEX]=${PARAMS[5]}
-    SLIDINGWINDOW[$INDEX]=${PARAMS[6]}
-    MINLEN[$INDEX]=${PARAMS[7]}
-    REF_GENOME[$INDEX]=${PARAMS[8]}
-    BOWTIE_PARAMS[$INDEX]=${PARAMS[9]}
-    BOWTIE_THREADS[$INDEX]=${PARAMS[10]}
-  elif [[ ${#PARAMS[@]} -eq 12 ]]; then
-    EXP_LEN[$INDEX]=${PARAMS[3]}
-    TRIM_THREADS[$INDEX]=${PARAMS[4]}
-    LEADING[$INDEX]=${PARAMS[5]}
-    TRAILING[$INDEX]=${PARAMS[6]}
-    SLIDINGWINDOW[$INDEX]=${PARAMS[7]}
-    MINLEN[$INDEX]=${PARAMS[8]}
-    REF_GENOME[$INDEX]=${PARAMS[9]}
-    BOWTIE_PARAMS[$INDEX]=${PARAMS[10]}
-    BOWTIE_THREADS[$INDEX]=${PARAMS[11]}
-  else
-    echo "Check format of pipeline parameters in parameters.txt"
-    exit 3
-  fi
-  INDEX=$((INDEX+1))
-  PARAMS=$(grep -A1 "$PARAMS" parameters.txt | grep -v "$PARAMS")
-done
+PARAMS=($(grep -A1 '^SUBNAME' $PARAMETERS_FILE | grep -v '^SUBNAME'))
+SUBNAME[1]=${PARAMS[0]}
+SAMPLE[1]=${PARAMS[1]}
+CLIP_LEN[1]=${PARAMS[2]}
+if [[ ${#PARAMS[@]} -eq 11 ]]; then
+  TRIM_THREADS[1]=${PARAMS[3]}
+  LEADING[1]=${PARAMS[4]}
+  TRAILING[1]=${PARAMS[5]}
+  SLIDINGWINDOW[1]=${PARAMS[6]}
+  MINLEN[1]=${PARAMS[7]}
+  REF_GENOME[1]=${PARAMS[8]}
+  BOWTIE_PARAMS[1]=${PARAMS[9]}
+  BOWTIE_THREADS[1]=${PARAMS[10]}
+elif [[ ${#PARAMS[@]} -eq 12 ]]; then
+  EXP_LEN[1]=${PARAMS[3]}
+  TRIM_THREADS[1]=${PARAMS[4]}
+  LEADING[1]=${PARAMS[5]}
+  TRAILING[1]=${PARAMS[6]}
+  SLIDINGWINDOW[1]=${PARAMS[7]}
+  MINLEN[1]=${PARAMS[8]}
+  REF_GENOME[1]=${PARAMS[9]}
+  BOWTIE_PARAMS[1]=${PARAMS[10]}
+  BOWTIE_THREADS[1]=${PARAMS[11]}
+else
+  echo "Check format of pipeline parameters in $PARAMETERS_FILE"
+  exit 3
+fi
+INDEX=2
+PARAMS=($(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS"))
+# Assume the first set of parameters for all samples if only those are specified
+if [[ ${#PARAMS[@]} -eq 2 ]]; then
+  while [[ ${PARAMS[*]} ]]; do
+    SUBNAME[$INDEX]=${PARAMS[0]}
+    SAMPLE[$INDEX]=${PARAMS[1]}
+    # Error if parameters are intermittently specified
+    if [[ ${#PARAMS[@]} -ne 2 ]]; then
+      echo "Check format of pipeline paramters in $PARAMETERS_FILE"
+      exit 3
+    else
+      CLIP_LEN[$INDEX]=${CLIP_LEN[1]}
+      EXP_LEN[$INDEX]=${EXP_LEN[1]}
+      TRIM_THREADS[$INDEX]=${TRIM_THREADS[1]}
+      LEADING[$INDEX]=${LEADING[1]}
+      TRAILING[$INDEX]=${TRAILING[1]}
+      SLIDINGWINDOW[$INDEX]=${SLIDINGWINDOW[1]}
+      MINLEN[$INDEX]=${MINLEN[1]}
+      REF_GENOME[$INDEX]=${REF_GENOME[1]}
+      BOWTIE_PARAMS[$INDEX]=${BOWTIE_PARAMS[1]}
+      BOWTIE_THREADS[$INDEX]=${BOWTIE_THREADS[1]}
+    fi
+    INDEX=$((INDEX+1))
+    PARAMS=($(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS"))
+  done
+# Else source separately each set of parameters
+else
+  while [[ ${PARAMS[*]} ]]; do
+    SUBNAME[$INDEX]=${PARAMS[0]}
+    SAMPLE[$INDEX]=${PARAMS[1]}
+    CLIP_LEN[$INDEX]=${PARAMS[2]}
+    if [[ ${#PARAMS[@]} -eq 11 ]]; then
+      TRIM_THREADS[$INDEX]=${PARAMS[3]}
+      LEADING[$INDEX]=${PARAMS[4]}
+      TRAILING[$INDEX]=${PARAMS[5]}
+      SLIDINGWINDOW[$INDEX]=${PARAMS[6]}
+      MINLEN[$INDEX]=${PARAMS[7]}
+      REF_GENOME[$INDEX]=${PARAMS[8]}
+      BOWTIE_PARAMS[$INDEX]=${PARAMS[9]}
+      BOWTIE_THREADS[$INDEX]=${PARAMS[10]}
+    elif [[ ${#PARAMS[@]} -eq 12 ]]; then
+      EXP_LEN[$INDEX]=${PARAMS[3]}
+      TRIM_THREADS[$INDEX]=${PARAMS[4]}
+      LEADING[$INDEX]=${PARAMS[5]}
+      TRAILING[$INDEX]=${PARAMS[6]}
+      SLIDINGWINDOW[$INDEX]=${PARAMS[7]}
+      MINLEN[$INDEX]=${PARAMS[8]}
+      REF_GENOME[$INDEX]=${PARAMS[9]}
+      BOWTIE_PARAMS[$INDEX]=${PARAMS[10]}
+      BOWTIE_THREADS[$INDEX]=${PARAMS[11]}
+    else
+      echo "Check format of pipeline parameters in $PARAMETERS_FILE"
+      exit 3
+    fi
+    INDEX=$((INDEX+1))
+    PARAMS=($(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS"))
+  done
+fi
 
 # Locate directory containing adapter_clipper
 ADAPTER_CLIPPER=adapter-clipper/clipper.py
@@ -64,7 +121,7 @@ READ_COUNTER=read_counter/bin/simple_counts.pl
 
 # Source in parameters necessary for DGE analysis
 INDEX=1
-PARAMS=$(grep -A1 '^EXP' parameters.txt | grep -v '^EXP')
+PARAMS=$(grep -A1 '^EXP' $PARAMETERS_FILE | grep -v '^EXP')
 while [[ $PARAMS ]]; do
   PARAMS=($PARAMS)
   if [[ ${#PARAMS[@]} -eq 5 ]]; then
@@ -74,11 +131,11 @@ while [[ $PARAMS ]]; do
     SAMPLES[$INDEX]=${PARAMS[3]}
     JOBS[$INDEX]=${PARAMS[4]}
   else
-    echo "Check format of DGE analysis parameters in parameters.txt"
+    echo "Check format of DGE analysis parameters in $PARAMETERS_FILE"
     exit 3
   fi
   INDEX=$((INDEX+1))
-  PARAMS=$(grep -A1 "$PARAMS" parameters.txt | grep -v "$PARAMS")
+  PARAMS=$(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS")
 done
 
 # Locate directory containing dge_analysis
