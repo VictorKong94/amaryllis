@@ -10,7 +10,7 @@ names, column names, spacing between text elements, or the file type.
 # GENERAL SETUP #
 #################
 
-BASE_DIR=/data/ftp-data/verge/000/fq/
+BASE_DIR=
 
 ############
 # PIPELINE #
@@ -28,7 +28,7 @@ BASE_DIR=/data/ftp-data/verge/000/fq/
 #   TRAILING: Remove bases from end of read below this threshold quality
 #   SLIDINGWINDOW: Perform sliding window trimming, cutting when the average
 #                  quality within the window falls below a threshold (format
-#                  <threshold quality>:<window size>)
+#                  <window size>:<threshold quality>)
 #   MINLEN: Threshold length below which a read is dropped
 # For Bowtie2:
 #   REF_GENOME: Reference genome to which reads will be mapped
@@ -37,13 +37,7 @@ BASE_DIR=/data/ftp-data/verge/000/fq/
 #   BOWTIE_THREADS: Number of parallel search threads to run
 
 SUBNAME	SAMPLE	CLIP_LEN	EXP_LEN	TRIM_THREADS	LEADING	TRAILING	SLIDINGWINDOW	MINLEN	REF_GENOME	BOWTIE_PARAMS	BOWTIE_THREADS
-mm_dged	vg000.dged	8		25	3	3	6:15	40	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
-mm_dgef	vg000.dgef	8		25	3	3	6:15	40	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
-mm_dgeg	vg000.dgeg	8		25	3	3	6:15	40	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
-mm_ftd	vg000.ftd	8		25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
-mm_ftf	vg000.ftf	8		25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
-mm_ftg	vg000.ftg	8		25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
-mm_fth	vg000.fth	8		25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
+
 
 ##############################
 # DIFFERENTIAL GENE ANALYSIS #
@@ -60,3 +54,4 @@ mm_fth	vg000.fth	8		25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc
 #       where "<job_i>" = "<baseline_sample_i>,<treatment_sample_i>"
 
 EXP	METHOD	ANNOTATIONS	SAMPLES	JOBS
+
