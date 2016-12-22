@@ -91,5 +91,6 @@ ENV/
 # Mac OS X preference files
 *.DS_Store
 
-# Reference files
-reference/
+# Debugging
+Trimmomatic*
+test/reference/*.bt2

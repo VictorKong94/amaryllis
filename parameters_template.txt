@@ -1,0 +1,57 @@
+################
+# INSTRUCTIONS #
+################
+
+Use this plaintext file to store the parameters necessary for running the RNA
+Sequencing pipeline used at Amaryllis Nucleics. Take care not to alter variable
+names, column names, spacing between text elements, or the file type.
+
+#################
+# GENERAL SETUP #
+#################
+
+BASE_DIR=
+
+############
+# PIPELINE #
+############
+
+# General purpose:
+#   SUBNAME: Unique, case-sensitive substring to search for in filenames
+#   SAMPLE: Sample name you want to give to the files found (no whitespace)
+# For adapter-clipper:
+#   CLIP_LEN: Maximum number of nucleotides to remove from start of reads
+#   EXP_LEN: Expected length of reads in nucleotides (optional)
+# For Trimmomatic:
+#   TRIM_THREADS: 
+#   LEADING: Remove bases from start of read below this threshold quality
+#   TRAILING: Remove bases from end of read below this threshold quality
+#   SLIDINGWINDOW: Perform sliding window trimming, cutting when the average
+#                  quality within the window falls below a threshold (format
+#                  <window size>:<threshold quality>)
+#   MINLEN: Threshold length below which a read is dropped
+# For Bowtie2:
+#   REF_GENOME: Reference genome to which reads will be mapped
+#   BOWTIE_PARAMS: "--nofw" to skip read alignment to forward reference strand
+#                  "--norc" to skip read alignment to reverse reference strand
+#   BOWTIE_THREADS: Number of parallel search threads to run
+
+SUBNAME	SAMPLE	CLIP_LEN	EXP_LEN	TRIM_THREADS	LEADING	TRAILING	SLIDINGWINDOW	MINLEN	REF_GENOME	BOWTIE_PARAMS	BOWTIE_THREADS
+
+
+##############################
+# DIFFERENTIAL GENE ANALYSIS #
+##############################
+
+# EXP: Concise name for the experiment (no whitespace)
+# METHOD: "--et" Fisher's exact test (suitable for single factor experiments)
+#         "--lrt" likelihood ratio test
+#         "--qlf" quasi-likelihood test
+# ANNOTATIONS: File containing gene annotations relevant to the experiment
+# SAMPLES: File containing information on samples relevant to the experiment,
+#          including library sizes and treatment groups
+# JOBS: List of analyses to perform in the format "<job_1> <job_2> .. <job_n>",
+#       where "<job_i>" = "<baseline_sample_i>,<treatment_sample_i>"
+
+EXP	METHOD	ANNOTATIONS	SAMPLES	JOBS
+
