@@ -2,6 +2,25 @@
 # SETUP #
 #########
 
+# Locate directory containing adapter_clipper
+ADAPTER_CLIPPER=/data/amaryllis/adapter-clipper/clipper.py
+
+# Locate directory containing Trimmomatic
+TRIM_BIN=/installs/Trimmomatic-0.36
+TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
+ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
+
+# Locate directory containing read_counter
+READ_COUNTER=/data/amaryllis/read_counter/bin/simple_counts.pl
+
+# Locate directory containing dge_analysis
+DGE=/data/amaryllis/dge-analysis/dge.R
+
+
+#######################################
+# Nothing below here should be edited #
+#######################################
+
 # Run with command `sh pipeline.sh <parameters_file>`
 PARAMETERS_FILE=$1
 
@@ -108,17 +127,6 @@ else
   done
 fi
 
-# Locate directory containing adapter_clipper
-ADAPTER_CLIPPER=/data/amaryllis/adapter-clipper/clipper.py
-
-# Locate directory containing Trimmomatic
-TRIM_BIN=/installs/Trimmomatic-0.36
-TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
-ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
-
-# Locate directory containing read_counter
-READ_COUNTER=/data/amaryllis/read_counter/bin/simple_counts.pl
-
 # Source in parameters necessary for DGE analysis
 INDEX=1
 PARAMS=($(grep -A1 '^EXP' $PARAMETERS_FILE | grep -v '^EXP'))
@@ -136,9 +144,6 @@ while [[ ${PARAMS[*]} ]]; do
   INDEX=$((INDEX+1))
   PARAMS=($(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS"))
 done
-
-# Locate directory containing dge_analysis
-DGE=/data/amaryllis/dge-analysis/dge.R
 
 # Create join_by function, which concatenates multiple strings to one
 function join_by { local IFS="$1"; shift; echo "$*"; }

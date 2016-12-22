@@ -1,4 +1,4 @@
-new:
+new-clone-init:
 	git submodule update --init --recursive
 
 update-adapter-clipper:
