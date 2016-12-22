@@ -45,7 +45,7 @@ elif [[ ${#PARAMS[@]} -eq 12 ]]; then
   BOWTIE_PARAMS[1]=${PARAMS[10]}
   BOWTIE_THREADS[1]=${PARAMS[11]}
 else
-  echo "Check format of pipeline parameters in $PARAMETERS_FILE"
+  echo "Check format of pipeline parameters in $PARAMETERS_FILE" >&2
   exit 3
 fi
 INDEX=2
@@ -57,7 +57,7 @@ if [[ ${#PARAMS[@]} -eq 2 ]]; then
     SAMPLE[$INDEX]=${PARAMS[1]}
     # Error if parameters are intermittently specified
     if [[ ${#PARAMS[@]} -ne 2 ]]; then
-      echo "Check format of pipeline paramters in $PARAMETERS_FILE"
+      echo "Check format of pipeline parameters in $PARAMETERS_FILE" >&2
       exit 3
     else
       CLIP_LEN[$INDEX]=${CLIP_LEN[1]}
@@ -100,7 +100,7 @@ else
       BOWTIE_PARAMS[$INDEX]=${PARAMS[10]}
       BOWTIE_THREADS[$INDEX]=${PARAMS[11]}
     else
-      echo "Check format of pipeline parameters in $PARAMETERS_FILE"
+      echo "Check format of pipeline parameters in $PARAMETERS_FILE" >&2
       exit 3
     fi
     INDEX=$((INDEX+1))
@@ -109,7 +109,7 @@ else
 fi
 
 # Locate directory containing adapter_clipper
-ADAPTER_CLIPPER=adapter-clipper/clipper.py
+ADAPTER_CLIPPER=/data/amaryllis/adapter-clipper/clipper.py
 
 # Locate directory containing Trimmomatic
 TRIM_BIN=/installs/Trimmomatic-0.36
@@ -117,13 +117,12 @@ TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
 ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
 
 # Locate directory containing read_counter
-READ_COUNTER=read_counter/bin/simple_counts.pl
+READ_COUNTER=/data/amaryllis/read_counter/bin/simple_counts.pl
 
 # Source in parameters necessary for DGE analysis
 INDEX=1
-PARAMS=$(grep -A1 '^EXP' $PARAMETERS_FILE | grep -v '^EXP')
-while [[ $PARAMS ]]; do
-  PARAMS=($PARAMS)
+PARAMS=($(grep -A1 '^EXP' $PARAMETERS_FILE | grep -v '^EXP'))
+while [[ ${PARAMS[*]} ]]; do
   if [[ ${#PARAMS[@]} -eq 5 ]]; then
     EXP[$INDEX]=${PARAMS[0]}
     METHOD[$INDEX]=${PARAMS[1]}
@@ -131,15 +130,15 @@ while [[ $PARAMS ]]; do
     SAMPLES[$INDEX]=${PARAMS[3]}
     JOBS[$INDEX]=${PARAMS[4]}
   else
-    echo "Check format of DGE analysis parameters in $PARAMETERS_FILE"
+    echo "Check format of DGE analysis parameters in $PARAMETERS_FILE" >&2
     exit 3
   fi
   INDEX=$((INDEX+1))
-  PARAMS=$(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS")
+  PARAMS=($(grep -A1 "$PARAMS" $PARAMETERS_FILE | grep -v "$PARAMS"))
 done
 
 # Locate directory containing dge_analysis
-DGE=dge-analysis/dge.R
+DGE=/data/amaryllis/dge-analysis/dge.R
 
 # Create join_by function, which concatenates multiple strings to one
 function join_by { local IFS="$1"; shift; echo "$*"; }
@@ -151,57 +150,61 @@ function join_by { local IFS="$1"; shift; echo "$*"; }
 
 # Stage 0: Create symbolic links back to raw files grouped by sample
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
-  SAMPLE=${SAMPLE[$INDEX]}
-  mkdir -p $GROUPED_DIR/$SAMPLE
+  SAMPLE_I=${SAMPLE[$INDEX]}
+  mkdir -p $GROUPED_DIR/$SAMPLE_I
   for FILE in $(find $RAW_DIR -name "${SUBNAME[$INDEX]}*.fastq*"); do
-    ln -sf "../..${FILE/$BASE_DIR/}" $GROUPED_DIR/$SAMPLE/${FILE##*/}
+    ln -sf "../..${FILE/$BASE_DIR/}" $GROUPED_DIR/$SAMPLE_I/${FILE##*/}
   done
-  mkdir -p $QA_DIR/raw/$SAMPLE
-  fastqc -o $QA_DIR/raw/$SAMPLE $(find $GROUPED_DIR/$SAMPLE -type l)
+  mkdir -p $QA_DIR/raw/$SAMPLE_I
+  fastqc -o $QA_DIR/raw/$SAMPLE_I $(find $GROUPED_DIR/$SAMPLE_I -type l) \
+            &> /dev/null
 done
 
 # Stage 1: Clip nucleotides off start of each read
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
-  SAMPLE=${SAMPLE[$INDEX]}
-  python3 $ADAPTER_CLIPPER $GROUPED_DIR/$SAMPLE \
+  SAMPLE_I=${SAMPLE[$INDEX]}
+  python3 $ADAPTER_CLIPPER $GROUPED_DIR/$SAMPLE_I \
           ${CLIP_LEN[$INDEX]} ${EXP_LEN[$INDEX]}
-  mkdir -p $QA_DIR/clipped/$SAMPLE
-  fastqc -o $QA_DIR/clipped/$SAMPLE $(find $CLIP_DIR/$SAMPLE -name "*.fastq*")
+  mkdir -p $QA_DIR/clipped/$SAMPLE_I
+  fastqc -o $QA_DIR/clipped/$SAMPLE_I $(find $CLIP_DIR/$SAMPLE_I -type f) \
+            &> /dev/null
 done
 
 # Stage 2: Use Trimmomatic to do quality trimming
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
-  SAMPLE=${SAMPLE[$INDEX]}
-  mkdir -p $TRIM_DIR/$SAMPLE $QA_DIR/trimmed_qc/$SAMPLE \
-           $QA_DIR/trimmed_logs/$SAMPLE
-  for FILE in $(ls $CLIP_DIR/$SAMPLE); do
+  SAMPLE_I=${SAMPLE[$INDEX]}
+  mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/trimmed_logs/$SAMPLE_I \
+           $QA_DIR/trimmed_qc/$SAMPLE_I
+  for FILE in $(ls $CLIP_DIR/$SAMPLE_I); do
     java -jar $TRIMMER SE -phred33 -threads ${TRIM_THREADS[$INDEX]} \
-              $CLIP_DIR/$SAMPLE/$FILE $TRIM_DIR/$SAMPLE/$FILE \
+              $CLIP_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
               ILLUMINACLIP:$ADAPTERS \
               LEADING:${LEADING[$INDEX]} \
               TRAILING:${TRAILING[$INDEX]} \
               SLIDINGWINDOW:${SLIDINGWINDOW[$INDEX]} \
               MINLEN:${MINLEN[$INDEX]} \
-              2>> $QA_DIR/trimmed_logs/$SAMPLE/${FILE/.fastq.gz/.log}
+              2>> $QA_DIR/trimmed_logs/$SAMPLE_I/${FILE/.fastq.gz/.log}
   done
-  fastqc -o $QA_DIR/trimmed_qc/$SAMPLE $(find $TRIM_DIR/$SAMPLE -name "*.gz")
+  fastqc -o $QA_DIR/trimmed_qc/$SAMPLE_I $(find $TRIM_DIR/$SAMPLE_I -type f) \
+            &> /dev/null
 done
 
 # Stage 3: Use Bowtie2 to map to cDNA reference
-mkdir -p $BAM_DIR $QA_DIR/bam_logs
+mkdir -p $BAM_DIR $QA_DIR/bam_logs $QA_DIR/bam_qc
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
-  SAMPLE=${SAMPLE[$INDEX]}
-  FQ_LIST=$(join_by , $TRIM_DIR/$SAMPLE/*)
+  SAMPLE_I=${SAMPLE[$INDEX]}
+  FQ_LIST=$(join_by , $TRIM_DIR/$SAMPLE_I/*)
   bowtie2 ${BOWTIE_PARAMS[$INDEX]} \
           -p${BOWTIE_THREADS[$INDEX]} \
           -x ${REF_GENOME[$INDEX]} \
           -U $FQ_LIST \
-          2> $QA_DIR/bam_logs/$SAMPLE.log \
-          | samtools view -bS -o $BAM_DIR/$SAMPLE.bam
+          2> $QA_DIR/bam_logs/$SAMPLE_I.log \
+          | samtools view -bS -o $BAM_DIR/$SAMPLE_I.bam
   samtools sort -@$BOWTIE_THREADS[$INDEX] \
-                $BAM_DIR/$SAMPLE.bam -o $BAM_DIR/$SAMPLE.sorted.bam
-  rm $BAM_DIR/$SAMPLE.bam
+                $BAM_DIR/$SAMPLE_I.bam -o $BAM_DIR/$SAMPLE_I.sorted.bam
+  rm $BAM_DIR/$SAMPLE_I.bam
 done
+fastqc -o $QA_DIR/bam_qc -f bam_mapped $(find $BAM_DIR -type f) &> /dev/null
 
 # Stage 4: Count reads per gene
 # sudo mkdir -p repro-archive
@@ -210,13 +213,12 @@ mkdir -p $COUNT_DIR
 perl $READ_COUNTER -o $COUNT_DIR $(find $BAM_DIR -name "*.sorted.bam")
 
 # Stage 5: Use edgeR to perform differential expression analysis
-for INDEX in $(seq 1 $NUM_ANALYSES)
+for INDEX in $(seq 1 ${#EXP[@]}); do
   mkdir -p $ANALYSIS_DIR/${EXP[$INDEX]}
   Rscript $DGE $COUNT_DIR \
                ${EXP[$INDEX]} \
                ${METHOD[$INDEX]} \
                ${ANNOTATIONS[$INDEX]} \
                ${SAMPLES[$INDEX]} \
-               -j ${JOBS[$INDEX]}
+               ${JOBS[$INDEX]}
 done
-
