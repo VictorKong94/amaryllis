@@ -21,6 +21,9 @@ for more information on dependencies.
 When configuring the pipeline for the first time, edit the "SETUP" block in
 `pipeline.sh` to match your system's directory sturcture and your preferences.
 
+It is highly recommended to perform a test run before using the pipeline on a
+full-sized dataset. To do this, run the command `make test-run` in the terminal.
+
 Before running an instance of the pipeline, edit `parameters.sh` to include
 specifications about the job you want to do.
 
