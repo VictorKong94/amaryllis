@@ -26,7 +26,7 @@ BASE_DIR=ftp-data
 #   TRAILING: Remove bases from end of read below this threshold quality
 #   SLIDINGWINDOW: Perform sliding window trimming, cutting when the average
 #                  quality within the window falls below a threshold (format
-#                  <window size>:<threshold quality>)
+#                  <threshold quality>:<window size>)
 #   MINLEN: Threshold length below which a read is dropped
 # For Bowtie2:
 #   REF_GENOME: Reference genome to which reads will be mapped
