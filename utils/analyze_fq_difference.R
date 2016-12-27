@@ -4,6 +4,8 @@
 #           file2.fq.gz:group_2_name \
 #           output_directory
 options(stringsAsFactors = F)
+library("ggplot2")
+library("gridExtra")
 
 quality = function(read_quality) {
   scores = as.numeric(factor(unlist(strsplit(read_quality, "")), levels = key))
@@ -23,7 +25,7 @@ key = c("!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".",
         "u", "v", "w", "x", "y", "z", "{", "|", "}", "~")
 
 # Read in FASTQ data
-args = strsplit(commandArgs(), ":")
+args = strsplit(commandArgs(trailingOnly = T), ":")
 fq1 = readLines(args[[1]][1])
 group1 = gsub("_", " ", args[[1]][2])
 fq2 = readLines(args[[2]][1])
@@ -45,27 +47,25 @@ fq_data$GC_content = sapply(fq_data$sequence, GC_content)
 fq_data[, c("quality_score", "quality_rank")] =
   matrix(unlist(lapply(fq_data$quality, quality)), ncol = 2, byrow = T)
 fq_data[, c("sequence", "quality")] = NULL
-rm(list = setdiff(ls(), "fq_data"))
+rm(list = setdiff(ls(), c("fq_data", "group1", "group2", "outdir")))
 
 # Create graphs for analysis
 plots = list()
 plots[[1]] = ggplot(fq_data, aes(x = read_length)) +
   labs(x = "Read Length", y = "Density") +
-  geom_histogram(aes(Group = Group, colour = Group, fill = Group), alpha = 0.5,
+  geom_histogram(aes(group = Group, colour = Group, fill = Group), alpha = 0.5,
                  binwidth = 1, position = position_dodge(width = 0))
 plots[[2]] = ggplot(fq_data, aes(x = GC_content)) +
   labs(x = "GC Content", y = "Density") +
-  geom_density(aes(Group = Group, colour = Group, fill = Group), alpha = 0.5)
+  geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.5)
 plots[[3]] = ggplot(fq_data, aes(x = quality_score)) +
   labs(x = "Quality Score", y = "Density") +
-  geom_density(aes(Group = Group, colour = Group, fill = Group), alpha = 0.5)
+  geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.5)
 plots[[4]] = ggplot(fq_data, aes(x = quality_rank)) +
   labs(x = "Quality Rank", y = "Density") +
-  geom_density(aes(Group = Group, colour = Group, fill = Group), alpha = 0.5)
+  geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.5)
 
 # Save graphs
-library(ggplot2)
-library(gridExtra)
 pdf(paste0(outdir, "/fq_difference.pdf"),
     height = 7.5, width = 13, onefile = T, paper = "USr")
 do.call("grid.arrange", c(plots, ncol = 2))
@@ -74,14 +74,16 @@ dev.off()
 # Hypothesis Tests
 fq1_mean = sapply(fq_data[fq_data$Group == group1, -1], mean)
 fq2_mean = sapply(fq_data[fq_data$Group == group2, -1], mean)
-diff_means = fq1_mean - both_mean
+diff_means = fq1_mean - fq2_mean
 se = sapply(fq_data[, -1], sd) / sqrt(nrow(fq_data))
 z = diff_means / se
 p = 2 * pnorm(-abs(z))
-write(c(paste(group1, "mean") = fq1_mean,
-        paste(group2, "mean") = fq2_mean,
-        "difference(mean)" = diff_means,
-        "standard error" = se,
-        "test statistic" = z,
-        "p-value" = p),
-      file = paste0(outdir, "/fq_difference.txt"))
+fq1_mean_name = paste(group1, "mean")
+fq2_mean_name = paste(group2, "mean")
+results = c(fq1_mean_name = fq1_mean,
+            fq2_mean_name = fq2_mean,
+            "difference(mean)" = diff_means,
+            "standard error" = se,
+            "test statistic" = z,
+            "p-value" = p)
+write(results, file = paste0(outdir, "/fq_difference.txt"))
