@@ -92,5 +92,6 @@ ENV/
 *.DS_Store
 
 # Debugging
+*.Rhistory
 Trimmomatic*
 test/reference/*.bt2

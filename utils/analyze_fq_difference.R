@@ -1,3 +1,8 @@
+# Run with command:
+#   Rscript analyze_fq_difference.R \
+#           file1.fq.gz:group_1_name \
+#           file2.fq.gz:group_2_name \
+#           output_directory
 options(stringsAsFactors = F)
 
 quality = function(read_quality) {
@@ -20,16 +25,16 @@ key = c("!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".",
 # Read in FASTQ data
 args = strsplit(commandArgs(), ":")
 fq1 = readLines(args[[1]][1])
-group1 = args[[1]][2]
+group1 = gsub("_", " ", args[[1]][2])
 fq2 = readLines(args[[2]][1])
-group2 = args[[2]][2]
-
+group2 = gsub("_", " ", args[[2]][2])
+outdir = args[[3]][1]
 
 # Organize raw data
-fq1 = data.frame("Group" = "FASTQ 1 Only",
+fq1 = data.frame("Group" = group1,
                  "sequence" = fq1[seq(2, length(fq1), by = 4)],
                  "quality" = fq1[seq(4, length(fq1), by = 4)])
-fq2 = data.frame("Group" = "Both FASTQs",
+fq2 = data.frame("Group" = group2,
                  "sequence" = fq2[seq(2, length(fq2), by = 4)],
                  "quality" = fq2[seq(4, length(fq2), by = 4)])
 fq_data = rbind(fq1, fq2); rm(fq1, fq2)
@@ -61,13 +66,22 @@ plots[[4]] = ggplot(fq_data, aes(x = quality_rank)) +
 # Save graphs
 library(ggplot2)
 library(gridExtra)
-pdf("fq_difference.pdf", height = 7.5, width = 13, onefile = T, paper = "USr")
+pdf(paste0(outdir, "/fq_difference.pdf"),
+    height = 7.5, width = 13, onefile = T, paper = "USr")
 do.call("grid.arrange", c(plots, ncol = 2))
 dev.off()
 
 # Hypothesis Tests
 fq1_mean = sapply(fq_data[fq_data$Group == group1, -1], mean)
-both_mean = sapply(fq_data[fq_data$Group == group2, -1], mean)
+fq2_mean = sapply(fq_data[fq_data$Group == group2, -1], mean)
 diff_means = fq1_mean - both_mean
 se = sapply(fq_data[, -1], sd) / sqrt(nrow(fq_data))
 z = diff_means / se
+p = 2 * pnorm(-abs(z))
+write(c(paste(group1, "mean") = fq1_mean,
+        paste(group2, "mean") = fq2_mean,
+        "difference(mean)" = diff_means,
+        "standard error" = se,
+        "test statistic" = z,
+        "p-value" = p),
+      file = paste0(outdir, "/fq_difference.txt"))

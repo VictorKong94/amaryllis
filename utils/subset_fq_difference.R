@@ -1,3 +1,6 @@
+# Run with command:
+#   Rscript subset_fq_difference.R file1.fq.gz file2.fq.gz output_directory
+
 # Pull relevant files' names from arguments
 args = commandArgs(trailingOnly = T)
 file1 = args[1]
