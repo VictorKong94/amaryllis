@@ -9,9 +9,7 @@ library("gridExtra")
 
 quality = function(read_quality) {
   scores = as.numeric(factor(unlist(strsplit(read_quality, "")), levels = key))
-  mean_score = mean(scores)
-  mean_rank = mean(as.numeric(factor(scores, levels = sort(unique(scores)))))
-  return(c(mean_score, mean_rank))
+  return(mean(scores))
 }
 GC_content = function(sequence) {
   1 - nchar(gsub("[GC]", "", sequence)) / nchar(sequence)
@@ -44,8 +42,7 @@ fq_data = rbind(fq1, fq2); rm(fq1, fq2)
 # Compile useful quantitative data
 fq_data$read_length = nchar(fq_data$sequence)
 fq_data$GC_content = sapply(fq_data$sequence, GC_content)
-fq_data[, c("quality_score", "quality_rank")] =
-  matrix(unlist(lapply(fq_data$quality, quality)), ncol = 2, byrow = T)
+fq_data$quality_score = sapply(fq_data$quality, quality)
 fq_data[, c("sequence", "quality")] = NULL
 rm(list = setdiff(ls(), c("fq_data", "group1", "group2", "outdir")))
 
@@ -61,14 +58,11 @@ plots[[2]] = ggplot(fq_data, aes(x = GC_content)) +
 plots[[3]] = ggplot(fq_data, aes(x = quality_score)) +
   labs(x = "Quality Score", y = "Density") +
   geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.5)
-plots[[4]] = ggplot(fq_data, aes(x = quality_rank)) +
-  labs(x = "Quality Rank", y = "Density") +
-  geom_density(aes(group = Group, colour = Group, fill = Group), alpha = 0.5)
 
 # Save graphs
 pdf(paste0(outdir, "/fq_difference.pdf"),
-    height = 7.5, width = 13, onefile = T, paper = "USr")
-do.call("grid.arrange", c(plots, ncol = 2))
+    height = 13, width = 7.5, onefile = T, paper = "us")
+do.call("grid.arrange", c(plots, ncol = 1))
 dev.off()
 
 # Hypothesis Tests
@@ -78,12 +72,19 @@ diff_means = fq1_mean - fq2_mean
 se = sapply(fq_data[, -1], sd) / sqrt(nrow(fq_data))
 z = diff_means / se
 p = 2 * pnorm(-abs(z))
-fq1_mean_name = paste(group1, "mean")
-fq2_mean_name = paste(group2, "mean")
-results = c(fq1_mean_name = fq1_mean,
-            fq2_mean_name = fq2_mean,
-            "difference(mean)" = diff_means,
-            "standard error" = se,
-            "test statistic" = z,
-            "p-value" = p)
-write(results, file = paste0(outdir, "/fq_difference.txt"))
+results = data.frame("Read Length" = numeric(),
+                     "GC Content" = numeric(),
+                     "Quality Score" = numeric())
+results[1,] = fq1_mean
+results[2,] = fq2_mean
+results[3,] = diff_means
+results[4,] = se
+results[5,] = z
+results[6,] = p
+row.names(results) = c(paste(group1, "mean"),
+                       paste(group2, "mean"),
+                       "Difference in means",
+                       "Standard error",
+                       "Test statistic",
+                       "P-value")
+write.table(results, file = paste0(outdir, "/fq_difference.txt"), sep = "\t")
