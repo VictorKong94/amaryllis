@@ -19,16 +19,14 @@ BASE_DIR=fq
 # General purpose:
 #   SUBNAME: Unique, case-sensitive substring to search for in filenames
 #   SAMPLE: Sample name you want to give to the files found (no whitespace)
-# For adapter-clipper:
-#   CLIP_LEN: Maximum number of nucleotides to remove from start of reads
-#   EXP_LEN: Expected length of reads in nucleotides (optional)
 # For Trimmomatic:
 #   TRIM_THREADS: 
+#   HEADCROP: Number of nucleotides to remove from start of reads
 #   LEADING: Remove bases from start of read below this threshold quality
 #   TRAILING: Remove bases from end of read below this threshold quality
 #   SLIDINGWINDOW: Perform sliding window trimming, cutting when the average
 #                  quality within the window falls below a threshold (format
-#                  <threshold quality>:<window size>)
+#                  <window size>:<threshold quality>)
 #   MINLEN: Threshold length below which a read is dropped
 # For Bowtie2:
 #   REF_GENOME: Reference genome to which reads will be mapped
@@ -36,10 +34,10 @@ BASE_DIR=fq
 #                  "--norc" to skip read alignment to reverse reference strand
 #   BOWTIE_THREADS: Number of parallel search threads to run
 
-SUBNAME	SAMPLE	CLIP_LEN	EXP_LEN	TRIM_THREADS	LEADING	TRAILING	SLIDINGWINDOW	MINLEN	REF_GENOME	BOWTIE_PARAMS	BOWTIE_THREADS
-an1	an1	8	80	25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
+SUBNAME	SAMPLE	TRIM_THREADS	HEADCROP	LEADING	TRAILING	SLIDINGWINDOW	MINLEN	REF_GENOME	BOWTIE_PARAMS	BOWTIE_THREADS
+an1	an1	25	8	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
 an2	an2
-an3	an3	8	80	25	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
+an3	an3	25	8	3	3	4:15	50	reference/Mus_musculus.GRCm38.cdna.all	--norc	5
 an4	an4
 an5	an5
 an6	an6

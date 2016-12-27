@@ -2,9 +2,6 @@
 # SETUP #
 #########
 
-# Locate directory containing adapter_clipper
-ADAPTER_CLIPPER=/data/amaryllis/adapter-clipper/clipper.py
-
 # Locate directory containing Trimmomatic
 TRIM_BIN=/installs/Trimmomatic-0.36
 TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
@@ -32,7 +29,6 @@ BASE_DIR=${BASE_DIR%/}
 QA_DIR=$BASE_DIR/qa
 RAW_DIR=$BASE_DIR/raw
 GROUPED_DIR=$BASE_DIR/grouped
-CLIP_DIR=$BASE_DIR/clipped
 TRIM_DIR=$BASE_DIR/trimmed
 BAM_DIR=$BASE_DIR/bam
 COUNT_DIR=$BASE_DIR/counted
@@ -41,11 +37,11 @@ ANALYSIS_DIR=$BASE_DIR/analysis
 # Check format of parameters necessary for pipeline and source
 INDEX=1
 PARAMS=($(grep -A1 '^SUBNAME' $PARAMETERS_FILE | grep -v '^SUBNAME'))
-SUBNAME[1]=${PARAMS[0]}
-SAMPLE[1]=${PARAMS[1]}
-CLIP_LEN[1]=${PARAMS[2]}
 if [[ ${#PARAMS[@]} -eq 11 ]]; then
-  TRIM_THREADS[1]=${PARAMS[3]}
+  SUBNAME[1]=${PARAMS[0]}
+  SAMPLE[1]=${PARAMS[1]}
+  TRIM_THREADS[1]=${PARAMS[2]}
+  HEADCROP[1]=${PARAMS[3]}
   LEADING[1]=${PARAMS[4]}
   TRAILING[1]=${PARAMS[5]}
   SLIDINGWINDOW[1]=${PARAMS[6]}
@@ -53,16 +49,6 @@ if [[ ${#PARAMS[@]} -eq 11 ]]; then
   REF_GENOME[1]=${PARAMS[8]}
   BOWTIE_PARAMS[1]=${PARAMS[9]}
   BOWTIE_THREADS[1]=${PARAMS[10]}
-elif [[ ${#PARAMS[@]} -eq 12 ]]; then
-  EXP_LEN[1]=${PARAMS[3]}
-  TRIM_THREADS[1]=${PARAMS[4]}
-  LEADING[1]=${PARAMS[5]}
-  TRAILING[1]=${PARAMS[6]}
-  SLIDINGWINDOW[1]=${PARAMS[7]}
-  MINLEN[1]=${PARAMS[8]}
-  REF_GENOME[1]=${PARAMS[9]}
-  BOWTIE_PARAMS[1]=${PARAMS[10]}
-  BOWTIE_THREADS[1]=${PARAMS[11]}
 else
   echo "Check format of pipeline parameters in $PARAMETERS_FILE" >&2
   exit 3
@@ -79,9 +65,8 @@ if [[ ${#PARAMS[@]} -eq 2 ]]; then
       echo "Check format of pipeline parameters in $PARAMETERS_FILE" >&2
       exit 3
     else
-      CLIP_LEN[$INDEX]=${CLIP_LEN[1]}
-      EXP_LEN[$INDEX]=${EXP_LEN[1]}
       TRIM_THREADS[$INDEX]=${TRIM_THREADS[1]}
+      HEADCROP[$INDEX]=${HEADCROP[1]}
       LEADING[$INDEX]=${LEADING[1]}
       TRAILING[$INDEX]=${TRAILING[1]}
       SLIDINGWINDOW[$INDEX]=${SLIDINGWINDOW[1]}
@@ -96,11 +81,11 @@ if [[ ${#PARAMS[@]} -eq 2 ]]; then
 # Else source separately each set of parameters
 else
   while [[ ${PARAMS[*]} ]]; do
-    SUBNAME[$INDEX]=${PARAMS[0]}
-    SAMPLE[$INDEX]=${PARAMS[1]}
-    CLIP_LEN[$INDEX]=${PARAMS[2]}
     if [[ ${#PARAMS[@]} -eq 11 ]]; then
-      TRIM_THREADS[$INDEX]=${PARAMS[3]}
+      SUBNAME[$INDEX]=${PARAMS[0]}
+      SAMPLE[$INDEX]=${PARAMS[1]}
+      TRIM_THREADS[$INDEX]=${PARAMS[2]}
+      HEADCROP[$INDEX]=${PARAMS[3]}
       LEADING[$INDEX]=${PARAMS[4]}
       TRAILING[$INDEX]=${PARAMS[5]}
       SLIDINGWINDOW[$INDEX]=${PARAMS[6]}
@@ -108,16 +93,6 @@ else
       REF_GENOME[$INDEX]=${PARAMS[8]}
       BOWTIE_PARAMS[$INDEX]=${PARAMS[9]}
       BOWTIE_THREADS[$INDEX]=${PARAMS[10]}
-    elif [[ ${#PARAMS[@]} -eq 12 ]]; then
-      EXP_LEN[$INDEX]=${PARAMS[3]}
-      TRIM_THREADS[$INDEX]=${PARAMS[4]}
-      LEADING[$INDEX]=${PARAMS[5]}
-      TRAILING[$INDEX]=${PARAMS[6]}
-      SLIDINGWINDOW[$INDEX]=${PARAMS[7]}
-      MINLEN[$INDEX]=${PARAMS[8]}
-      REF_GENOME[$INDEX]=${PARAMS[9]}
-      BOWTIE_PARAMS[$INDEX]=${PARAMS[10]}
-      BOWTIE_THREADS[$INDEX]=${PARAMS[11]}
     else
       echo "Check format of pipeline parameters in $PARAMETERS_FILE" >&2
       exit 3
@@ -165,24 +140,15 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
             &> /dev/null
 done
 
-# Stage 1: Clip nucleotides off start of each read
-for INDEX in $(seq 1 ${#SAMPLE[@]}); do
-  SAMPLE_I=${SAMPLE[$INDEX]}
-  python3 $ADAPTER_CLIPPER $GROUPED_DIR/$SAMPLE_I \
-          ${CLIP_LEN[$INDEX]} ${EXP_LEN[$INDEX]}
-  mkdir -p $QA_DIR/clipped/$SAMPLE_I
-  fastqc -o $QA_DIR/clipped/$SAMPLE_I $(find $CLIP_DIR/$SAMPLE_I -type f) \
-            &> /dev/null
-done
-
-# Stage 2: Use Trimmomatic to do quality trimming
+# Stage 1: Use Trimmomatic to do quality trimming
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
   mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/trimmed_logs/$SAMPLE_I \
            $QA_DIR/trimmed_qc/$SAMPLE_I
   for FILE in $(ls $CLIP_DIR/$SAMPLE_I); do
     java -jar $TRIMMER SE -phred33 -threads ${TRIM_THREADS[$INDEX]} \
-              $CLIP_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
+              $GROUPED_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
+              HEADCROP:${HEADCROP[$INDEX]} \
               ILLUMINACLIP:$ADAPTERS \
               LEADING:${LEADING[$INDEX]} \
               TRAILING:${TRAILING[$INDEX]} \
@@ -194,7 +160,7 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
             &> /dev/null
 done
 
-# Stage 3: Use Bowtie2 to map to cDNA reference
+# Stage 2: Use Bowtie2 to map to cDNA reference
 mkdir -p $BAM_DIR $QA_DIR/bam_logs $QA_DIR/bam_qc
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
@@ -211,13 +177,13 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
 done
 fastqc -o $QA_DIR/bam_qc -f bam_mapped $(find $BAM_DIR -type f) &> /dev/null
 
-# Stage 4: Count reads per gene
+# Stage 3: Count reads per gene
 # sudo mkdir -p repro-archive
 # sudo chown $USER:root repro-archive
 mkdir -p $COUNT_DIR
 perl $READ_COUNTER -o $COUNT_DIR $(find $BAM_DIR -name "*.sorted.bam")
 
-# Stage 5: Use edgeR to perform differential expression analysis
+# Stage 4: Use edgeR to perform differential expression analysis
 for INDEX in $(seq 1 ${#EXP[@]}); do
   mkdir -p $ANALYSIS_DIR/${EXP[$INDEX]}
   Rscript $DGE $COUNT_DIR \
