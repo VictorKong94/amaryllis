@@ -3,7 +3,7 @@
 #########
 
 # Locate directory containing Trimmomatic
-TRIM_BIN=/installs/Trimmomatic-0.36
+TRIM_BIN=~/Desktop/internship/Trimmomatic-0.36
 TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
 ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
 
@@ -145,7 +145,7 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
   mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/trimmed_logs/$SAMPLE_I \
            $QA_DIR/trimmed_qc/$SAMPLE_I
-  for FILE in $(ls $CLIP_DIR/$SAMPLE_I); do
+  for FILE in $(ls $GROUPED_DIR/$SAMPLE_I); do
     java -jar $TRIMMER SE -phred33 -threads ${TRIM_THREADS[$INDEX]} \
               $GROUPED_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
               HEADCROP:${HEADCROP[$INDEX]} \
