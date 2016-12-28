@@ -6,7 +6,6 @@ You should have enough free storage space on your hard drive to store at least
 five times the size of your RNA-Seq dataset.
 In order to run this project, you must also have the following installed:
 - `FastQC`
-- `Python 3`
 - `Trimmomatic`
 - `Bowtie2`
 - `Perl` (modules: `Log::Reproducible`, `autodie.pm`, `Parallel/ForkManager.pm`)

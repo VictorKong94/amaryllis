@@ -3,7 +3,7 @@
 #########
 
 # Locate directory containing Trimmomatic
-TRIM_BIN=~/Desktop/internship/Trimmomatic-0.36
+TRIM_BIN=/installs/Trimmomatic-0.36
 TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
 ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
 
