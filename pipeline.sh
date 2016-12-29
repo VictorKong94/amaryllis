@@ -225,7 +225,7 @@ perl $READ_COUNTER -o $COUNT_DIR $(find $BAM_DIR -name "*.sorted.bam")
 
 # Stage 5: Use edgeR to perform differential expression analysis
 for INDEX in $(seq 1 ${#EXP[@]}); do
-  mkdir -p $ANALYSIS_DIR/${EXP[$INDEX]}
+  mkdir -p $ANALYSIS_DIR/${EXP[$INDEX]} $QA_DIR/analysis
   Rscript $DGE $COUNT_DIR \
                ${EXP[$INDEX]} \
                ${METHOD[$INDEX]} \
