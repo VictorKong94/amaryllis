@@ -1,9 +1,14 @@
-from __future__ import absolute_import, division, print_function
+# Run with command:
+#   python3 truncate_fq.py \
+#           <original_file_to_truncate> \
+#           <new_truncated_file_to_create> \
+#           <number_of_lines_to_keep>
+
 import gzip
+import os.path
 import sys
 
-def truncate(infile, num_lines):
-    outfile = infile.replace('original/', 'raw/')
+def truncate(infile, outfile, num_lines):
     with gzip.open(infile, 'rb') as in_f, gzip.open(outfile, 'wb') as out_f:
         for i, line in enumerate(in_f):
             if i >= num_lines:
@@ -12,6 +17,8 @@ def truncate(infile, num_lines):
 
 if __name__ == '__main__':
     infile = sys.argv[1]
-    num_lines = int(sys.argv[2])
-    truncate(infile, num_lines)
+    outfile = sys.argv[2]
+    assert not os.path.isfile(outfile), outfile + ' already exists'
+    num_lines = int(sys.argv[3])
+    truncate(infile, outfile, num_lines)
     

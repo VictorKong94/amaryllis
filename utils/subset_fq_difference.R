@@ -1,5 +1,8 @@
 # Run with command:
-#   Rscript subset_fq_difference.R file1.fq.gz file2.fq.gz output_directory
+#   Rscript subset_fq_difference.R \
+#           <file1.fastq.gz> \
+#           <file2.fastq.gz> \
+#           <output_directory>
 
 # Pull relevant files' names from arguments
 args = commandArgs(trailingOnly = T)
@@ -23,7 +26,7 @@ print("Infiles read")
 
 # Extract read IDs
 fq1_ids = fq1[seq(1, length(fq1), by = 4)]
-fq2_ids = fq2[seq(1, length(fq1), by = 4)]
+fq2_ids = fq2[seq(1, length(fq2), by = 4)]
 print("Read IDs extracted")
 
 # Sort reads by uniqueness to one file

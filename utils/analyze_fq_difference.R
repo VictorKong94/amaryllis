@@ -1,8 +1,8 @@
 # Run with command:
 #   Rscript analyze_fq_difference.R \
-#           file1.fq.gz:group_1_name \
-#           file2.fq.gz:group_2_name \
-#           output_directory
+#           <file1.fastq.gz>:<group_1_name> \
+#           <file2.fastq.gz>:<group_2_name> \
+#           <output_directory>
 options(stringsAsFactors = F)
 library("ggplot2")
 library("gridExtra")
