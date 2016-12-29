@@ -10,10 +10,13 @@ TRIM_BIN=/installs/Trimmomatic-0.36
 TRIMMER=$TRIM_BIN/trimmomatic-0.36.jar
 ADAPTERS=$TRIM_BIN/adapters/TruSeq3-PE-2.fa:2:30:10
 
-# Locate directory containing read_counter
+# Locate survey_quality_improvement script
+SURVEY_QUALITY_IMPROVEMENT=/data/amaryllis/utils/survey_quality_improvement.R
+
+# Locate read_counter script
 READ_COUNTER=/data/amaryllis/read_counter/bin/simple_counts.pl
 
-# Locate directory containing dge_analysis
+# Locate dge_analysis script
 DGE=/data/amaryllis/dge-analysis/dge.R
 
 
@@ -178,8 +181,8 @@ done
 # Stage 2: Use Trimmomatic to do quality trimming
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
-  mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/trimmed_logs/$SAMPLE_I \
-           $QA_DIR/trimmed_qc/$SAMPLE_I
+  mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/quality_improvement/$SAMPLE_I \
+           $QA_DIR/trimmed_logs/$SAMPLE_I $QA_DIR/trimmed_qc/$SAMPLE_I
   for FILE in $(ls $CLIP_DIR/$SAMPLE_I); do
     java -jar $TRIMMER SE -phred33 -threads ${TRIM_THREADS[$INDEX]} \
               $CLIP_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
@@ -189,6 +192,9 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
               SLIDINGWINDOW:${SLIDINGWINDOW[$INDEX]} \
               MINLEN:${MINLEN[$INDEX]} \
               2>> $QA_DIR/trimmed_logs/$SAMPLE_I/${FILE/.fastq.gz/.log}
+    Rscript $SURVEY_QUALITY_IMPROVEMENT \
+            $GROUPED_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
+            $QA_DIR/quality_improvement/$SAMPLE_I/${FILE/.fastq.gz/.png}
   done
   fastqc -o $QA_DIR/trimmed_qc/$SAMPLE_I $(find $TRIM_DIR/$SAMPLE_I -type f) \
             &> /dev/null
