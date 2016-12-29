@@ -1,9 +1,6 @@
 [submodule "dge-analysis"]
 	path = dge-analysis
 	url = https://github.com/VictorKong94/dge-analysis.git
-[submodule "adapter-clipper"]
-	path = adapter-clipper
-	url = https://github.com/VictorKong94/adapter-clipper.git
 [submodule "read_counter"]
 	path = read_counter
 	url = https://github.com/mfcovington/read_counter.git
