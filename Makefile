@@ -16,11 +16,11 @@ update-read_counter:
 ##################
 
 clean-test:
-	rm -rf $(find test/f* -depth 1 -type d ! -name 'raw')
+	find test/f* -maxdepth 1 -mindepth 1 -type d ! -name 'raw' | xargs rm -rf
+	rm -rf test/repro-archive/
 
 test-run:
 	cd test && sh pipeline_testrun.sh && cd ..
 
 unbuild-test-reference:
-	rm -rf $(find test/reference -depth 1 ! -name '*.fa.gz')
-	
+	find test/ref* -maxdepth 1 -mindepth 1 ! -name '*.fa.gz' | xargs rm -rf
