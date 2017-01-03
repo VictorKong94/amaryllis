@@ -187,7 +187,7 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
                        2>> $LOG \
                        | samtools view -bS -o $BAM_DIR/$SAMPLE_I.bam"
   SAM_COMMAND="samtools sort -@$BOWTIE_THREADS[$INDEX] \
-                             $BAM_DIR/$SAMPLE_I.bam
+                             $BAM_DIR/$SAMPLE_I.bam \
                              -o $BAM_DIR/$SAMPLE_I.sorted.bam"
   # Align reads using Bowtie 2
   printf '%s\n%s' '---' 'Bowtie 2: Started: ' >> $LOG
