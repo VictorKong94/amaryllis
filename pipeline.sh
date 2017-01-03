@@ -149,6 +149,11 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/quality_improvement/$SAMPLE_I \
            $QA_DIR/trimmed_logs/$SAMPLE_I $QA_DIR/trimmed_qc/$SAMPLE_I
   for FILE in $(ls $GROUPED_DIR/$SAMPLE_I); do
+    LOG=$QA_DIR/trimmed_logs/$SAMPLE_I/${FILE/.fastq.gz/.log}
+    printf '%s\n' '---' >> $LOG
+    printf '%s%s\n' 'Java: Started: ' $(date) >> $LOG
+    printf '%s\n%s\n' 'Java: Version and Environment information:' \
+           $(java -version) >> $LOG
     java -jar $TRIMMER SE -phred33 -threads ${TRIM_THREADS[$INDEX]} \
               $GROUPED_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
               HEADCROP:${HEADCROP[$INDEX]} \
@@ -157,7 +162,8 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
               TRAILING:${TRAILING[$INDEX]} \
               SLIDINGWINDOW:${SLIDINGWINDOW[$INDEX]} \
               MINLEN:${MINLEN[$INDEX]} \
-              2>> $QA_DIR/trimmed_logs/$SAMPLE_I/${FILE/.fastq.gz/.log}
+              2>> $LOG
+    printf '%s\n' 'Java: Finished: ' $(date) >> $LOG
     Rscript $SURVEY_QUALITY_IMPROVEMENT \
             $GROUPED_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
             $QA_DIR/quality_improvement/$SAMPLE_I/${FILE/.fastq.gz/.png}
@@ -166,19 +172,35 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
             &> /dev/null
 done
 
-# Stage 2: Use Bowtie2 to map to cDNA reference
+# Stage 2: Use Bowtie2 to align reads to cDNA reference
 mkdir -p $BAM_DIR $QA_DIR/bam_logs $QA_DIR/bam_qc
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
   FQ_LIST=$(join_by , $TRIM_DIR/$SAMPLE_I/*)
-  bowtie2 ${BOWTIE_PARAMS[$INDEX]} \
-          -p${BOWTIE_THREADS[$INDEX]} \
-          -x ${REF_GENOME[$INDEX]} \
-          -U $FQ_LIST \
-          2> $QA_DIR/bam_logs/$SAMPLE_I.log \
-          | samtools view -bS -o $BAM_DIR/$SAMPLE_I.bam
-  samtools sort -@$BOWTIE_THREADS[$INDEX] \
-                $BAM_DIR/$SAMPLE_I.bam -o $BAM_DIR/$SAMPLE_I.sorted.bam
+  LOG=$QA_DIR/bam_logs/$SAMPLE_I.log
+  BT2_COMMAND="bowtie2 ${BOWTIE_PARAMS[$INDEX]} \
+                       -p${BOWTIE_THREADS[$INDEX]} \
+                       -x ${REF_GENOME[$INDEX]} \
+                       -U $FQ_LIST \
+                       2>> $LOG | samtools view -bS -o $BAM_DIR/$SAMPLE_I.bam"
+  SAM_COMMAND="samtools sort -@$BOWTIE_THREADS[$INDEX] \
+                             $BAM_DIR/$SAMPLE_I.bam
+                             -o $BAM_DIR/$SAMPLE_I.sorted.bam"
+  # Align reads using Bowtie 2
+  printf '%s\n' '---' >> $LOG
+  printf '%s%s\n' 'Bowtie 2: Started: ' $(date) >> $LOG
+  printf '%s\n%s\n' 'Bowtie 2: Command line arguments' $BT2_COMMAND >> $LOG
+  printf '%s\n%s\n%s\n' 'Bowtie 2: Version and Environment information:' \
+         $(bowtie2 --version) >> $LOG
+  $BT2_COMMAND
+  printf '%s\n' 'Bowtie 2: Finished: ' $(date) >> $LOG
+  # Sort aligned reads using SAMtools
+  printf '%s%s\n' 'SAMtools: Started: ' $(date) >> $LOG
+  printf '%s\n%s\n' 'SAMtools: Command line arguments' $SAM_COMMAND >> $LOG
+  printf '%s\n$s\n%s\n' 'SAMtools: Version and Environment information:' \
+         $(samtools --version) >> $LOG
+  $SAM_COMMAND
+  printf '%s\n' 'SAMtools: Finished: ' $(date) >> $LOG
   rm $BAM_DIR/$SAMPLE_I.bam
 done
 fastqc -o $QA_DIR/bam_qc -f bam_mapped $(find $BAM_DIR -type f) &> /dev/null
