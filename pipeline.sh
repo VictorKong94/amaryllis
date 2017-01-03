@@ -191,7 +191,6 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
     java -version 2>> $LOG
     java -jar $TRIMMER SE -phred33 -threads ${TRIM_THREADS[$INDEX]} \
               $GROUPED_DIR/$SAMPLE_I/$FILE $TRIM_DIR/$SAMPLE_I/$FILE \
-              HEADCROP:${HEADCROP[$INDEX]} \
               ILLUMINACLIP:$ADAPTERS \
               LEADING:${LEADING[$INDEX]} \
               TRAILING:${TRAILING[$INDEX]} \
@@ -222,7 +221,7 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
                        2>> $LOG \
                        | samtools view -bS -o $BAM_DIR/$SAMPLE_I.bam"
   SAM_COMMAND="samtools sort -@$BOWTIE_THREADS[$INDEX] \
-                             $BAM_DIR/$SAMPLE_I.bam
+                             $BAM_DIR/$SAMPLE_I.bam \
                              -o $BAM_DIR/$SAMPLE_I.sorted.bam"
   # Align reads using Bowtie 2
   printf '%s\n%s' '---' 'Bowtie 2: Started: ' >> $LOG
