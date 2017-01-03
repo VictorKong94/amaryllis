@@ -30,7 +30,7 @@ BASE_DIR=fq
 #                  quality within the window falls below a threshold (format
 #                  <threshold quality>:<window size>)
 #   MINLEN: Threshold length below which a read is dropped
-# For Bowtie2:
+# For Bowtie 2:
 #   REF_GENOME: Reference genome to which reads will be mapped
 #   BOWTIE_PARAMS: "--nofw" to skip read alignment to forward reference strand
 #                  "--norc" to skip read alignment to reverse reference strand
