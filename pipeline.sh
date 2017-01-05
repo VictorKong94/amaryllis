@@ -147,8 +147,8 @@ done
 # Stage 1: Use Trimmomatic to do quality trimming
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
-  mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/quality_improvement/$SAMPLE_I \
-           $LOG_DIR/trimmed/$SAMPLE_I $QA_DIR/trimmed/$SAMPLE_I
+  mkdir -p $TRIM_DIR/$SAMPLE_I $LOG_DIR/trimmed/$SAMPLE_I \
+           $QA_DIR/quality_improvement/$SAMPLE_I $QA_DIR/trimmed/$SAMPLE_I
   for FILE in $(ls $GROUPED_DIR/$SAMPLE_I); do
     LOG=$LOG_DIR/trimmed/$SAMPLE_I/${FILE/.fastq.gz/.log}
     printf '%s\n%s' '---' 'Java: Started: ' >> $LOG
