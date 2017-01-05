@@ -262,5 +262,5 @@ for INDEX in $(seq 1 ${#EXP[@]}); do
                ${METHOD[$INDEX]} \
                ${ANNOTATIONS[$INDEX]} \
                ${SAMPLES[$INDEX]} \
-               ${JOBS[$INDEX]}
+               ${JOBS[$INDEX]} &> /dev/null
 done
