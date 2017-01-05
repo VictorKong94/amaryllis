@@ -3,7 +3,7 @@
 #########
 
 # Locate directory containing adapter_clipper
-ADAPTER_CLIPPER=~/Desktop/amaryllis/amaryllis/adapter-clipper/clipper.py
+ADAPTER_CLIPPER=/data/amaryllis/adapter-clipper/clipper.py
 
 # Locate directory containing Trimmomatic
 TRIM_BIN=/installs/Trimmomatic-0.36
@@ -157,17 +157,17 @@ function join_by { local IFS="$1"; shift; echo "$*"; }
 # PIPELINE #
 ############
 
-# # Stage 0: Create symbolic links back to raw files grouped by sample
-# for INDEX in $(seq 1 ${#SAMPLE[@]}); do
-#   SAMPLE_I=${SAMPLE[$INDEX]}
-#   mkdir -p $GROUPED_DIR/$SAMPLE_I
-#   for FILE in $(find $RAW_DIR -name "${SUBNAME[$INDEX]}*.fastq*"); do
-#     ln -sf "../..${FILE/$BASE_DIR/}" $GROUPED_DIR/$SAMPLE_I/${FILE##*/}
-#   done
-#   mkdir -p $QA_DIR/raw/$SAMPLE_I
-#   fastqc -o $QA_DIR/raw/$SAMPLE_I $(find $GROUPED_DIR/$SAMPLE_I -type l) \
-#             &> /dev/null
-# done
+# Stage 0: Create symbolic links back to raw files grouped by sample
+for INDEX in $(seq 1 ${#SAMPLE[@]}); do
+  SAMPLE_I=${SAMPLE[$INDEX]}
+  mkdir -p $GROUPED_DIR/$SAMPLE_I
+  for FILE in $(find $RAW_DIR -name "${SUBNAME[$INDEX]}*.fastq*"); do
+    ln -sf "../..${FILE/$BASE_DIR/}" $GROUPED_DIR/$SAMPLE_I/${FILE##*/}
+  done
+  mkdir -p $QA_DIR/raw/$SAMPLE_I
+  fastqc -o $QA_DIR/raw/$SAMPLE_I $(find $GROUPED_DIR/$SAMPLE_I -type l) \
+            &> /dev/null
+done
 
 # Stage 1: Clip nucleotides off start of each read
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
