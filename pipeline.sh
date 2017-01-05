@@ -29,6 +29,7 @@ export $(grep 'BASE_DIR=' $PARAMETERS_FILE)
 
 # Locate and establish directories used to store data
 BASE_DIR=${BASE_DIR%/}
+LOG_DIR=$BASE_DIR/logs
 QA_DIR=$BASE_DIR/qa
 RAW_DIR=$BASE_DIR/raw
 GROUPED_DIR=$BASE_DIR/grouped
@@ -147,9 +148,9 @@ done
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
   mkdir -p $TRIM_DIR/$SAMPLE_I $QA_DIR/quality_improvement/$SAMPLE_I \
-           $QA_DIR/trimmed_logs/$SAMPLE_I $QA_DIR/trimmed_qc/$SAMPLE_I
+           $LOG_DIR/trimmed/$SAMPLE_I $QA_DIR/trimmed/$SAMPLE_I
   for FILE in $(ls $GROUPED_DIR/$SAMPLE_I); do
-    LOG=$QA_DIR/trimmed_logs/$SAMPLE_I/${FILE/.fastq.gz/.log}
+    LOG=$LOG_DIR/trimmed/$SAMPLE_I/${FILE/.fastq.gz/.log}
     printf '%s\n%s' '---' 'Java: Started: ' >> $LOG
     date >> $LOG
     printf '%s\n' 'Java: Version and Environment information:' >> $LOG
@@ -170,16 +171,16 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
             $QA_DIR/quality_improvement/$SAMPLE_I/${FILE/.fastq.gz/.png} \
             &> /dev/null
   done
-  fastqc -o $QA_DIR/trimmed_qc/$SAMPLE_I $(find $TRIM_DIR/$SAMPLE_I -type f) \
+  fastqc -o $QA_DIR/trimmed/$SAMPLE_I $(find $TRIM_DIR/$SAMPLE_I -type f) \
             &> /dev/null
 done
 
 # Stage 2: Use Bowtie2 to align reads to cDNA reference
-mkdir -p $BAM_DIR $QA_DIR/bam_logs $QA_DIR/bam_qc
+mkdir -p $BAM_DIR $LOG_DIR/bam $QA_DIR/bam
 for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   SAMPLE_I=${SAMPLE[$INDEX]}
   FQ_LIST=$(join_by , $TRIM_DIR/$SAMPLE_I/*)
-  LOG=$QA_DIR/bam_logs/$SAMPLE_I.log
+  LOG=$LOG_DIR/bam/$SAMPLE_I.log
   BT2_COMMAND="bowtie2 ${BOWTIE_PARAMS[$INDEX]} \
                        -p${BOWTIE_THREADS[$INDEX]} \
                        -x ${REF_GENOME[$INDEX]} \
@@ -211,7 +212,7 @@ for INDEX in $(seq 1 ${#SAMPLE[@]}); do
   date >> $LOG
   rm $BAM_DIR/$SAMPLE_I.bam
 done
-fastqc -o $QA_DIR/bam_qc -f bam_mapped $(find $BAM_DIR -type f) &> /dev/null
+fastqc -o $QA_DIR/bam -f bam_mapped $(find $BAM_DIR -type f) &> /dev/null
 
 # Stage 3: Count reads per gene
 # sudo mkdir -p repro-archive
@@ -221,7 +222,7 @@ perl $READ_COUNTER -o $COUNT_DIR $(find $BAM_DIR -name "*.sorted.bam")
 
 # Stage 4: Use edgeR to perform differential expression analysis
 for INDEX in $(seq 1 ${#EXP[@]}); do
-  mkdir -p $ANALYSIS_DIR/${EXP[$INDEX]} $QA_DIR/analysis
+  mkdir -p $ANALYSIS_DIR/${EXP[$INDEX]} $LOG_DIR/analysis
   Rscript $DGE $COUNT_DIR \
                ${EXP[$INDEX]} \
                ${METHOD[$INDEX]} \
