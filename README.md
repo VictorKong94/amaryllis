@@ -23,8 +23,9 @@ When configuring the pipeline for the first time, edit the "SETUP" block in
 It is highly recommended to perform a test run before using the pipeline on a
 full-sized dataset. To do this, run the command `make test-run` in the terminal.
 
-Before running an instance of the pipeline, create a `parameters.sh` file that
-includes specifications about the job you want to do.
+Before running an instance of the pipeline, create a `parameters_*.txt` file
+that includes specifications about the job you want to do. See
+`parameters_template.txt` for more information.
 
 To run the pipeline, execute the following command in your terminal:
-    `sh /path/to/pipeline.sh`
+    `sh /path/to/pipeline.sh /path/to/parameters_*.txt`
